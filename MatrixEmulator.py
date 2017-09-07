@@ -13,7 +13,7 @@ gridPanelY = 3
 
 class pixel:
     def __init__(self):
-        self.color = [0, 0, 0, 0]
+        self.color = [255, 255, 255]
 
 
 class panel:
@@ -29,7 +29,13 @@ class grid:
         self.panelX = panelX
         self.panelY = panelY
         self.panelOrder = panelOrder
-        self.Matrix = [[panel(self.panelX, self.panelY, self.panelOrder) for x in range(self.panelX)] for y in range(self.panelY)]
+
+        global panelPixelX
+        self.panelPixelX = panelPixelX
+        global panelPixelY
+        self.panelPixelY = panelPixelY
+
+        self.Matrix = [[panel(self.panelPixelX, self.panelPixelY, self.panelOrder) for x in range(self.panelX)] for y in range(self.panelY)]
 
 
 # Define some colors
@@ -53,26 +59,36 @@ def main():
     global gridPanelX
     global gridPanelY
 
-    pixelGrid = grid(gridPanelX, gridPanelY, "HL")
-
+    panelGrid = grid(gridPanelX, gridPanelY, "HL")
+    print panelGrid
     running = 1
 
     while running:
         clock.tick(30)  # fps
         screen.fill((0, 0, 0))  # fill window black
+        # counter stuff
+        currentX = 0
+        currentY = 0
+        currentPixel = 0  # just to keep track where we are
+
         # print(x[i][j])
         # Draw the grid
-        for currentPanelX in range(len(pixelGrid.Matrix)):
-            for currentPanelY in range(len(pixelGrid.Matrix)):
-                color = WHITE
-                if grid[currentPanelX][currentPanelY] == 1:
-                    color = GREEN
-                pygame.draw.rect(screen,
-                                 color,
-                                 [(pixelMargin + pixelWidth) * currentPanelX + pixelMargin,
-                                  (pixelMargin + pixelHeight) * currentPanelY + pixelMargin,
-                                  pixelWidth,
-                                  pixelHeight])
+        for currentPanelX in range(len(panelGrid.Matrix)):
+            for currentPanelY in range(len(panelGrid.Matrix)):
+                # panel inside grid
+                for currentPixelX in range(len(panelGrid.Matrix)):
+                    for currentPixelY in range(len(panelGrid.Matrix)):
+                        # pixel inside panel
+                        # color = panelGrid.Matrix[currentPanelX, currentPanelY]
+                        color = WHITE
+                        currentX = (pixelMargin + pixelWidth) * currentPixelX + pixelMargin
+                        currentY = (pixelMargin + pixelHeight) * currentPixelY + pixelMargin
+                        currentPixel = currentPixel + 1
+                        # draw that dirty little pixel
+                        pygame.draw.rect(screen, color, [currentX, currentY, pixelWidth, pixelHeight], 1)
+
+            currentY = currentY + pixelMargin + 2
+        currentX = currentX + pixelMargin + 2
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
