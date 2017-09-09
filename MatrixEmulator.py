@@ -1,4 +1,8 @@
 import pygame
+import os
+import pty
+import serial
+from random import randint
 
 pixelWidth = 8
 pixelHeight = 8
@@ -45,6 +49,26 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 
+serialMaster, serialSlave = pty.openpty()
+s_name = os.ttyname(serialSlave)
+serialDevice = serial.Serial(s_name)
+
+
+def writeSerialTestText():
+    global serialDevice
+    # To Write to the device
+    serialDevice.write('Your text')
+
+
+def readSerialBuffer():
+    global serialMaster
+    # To read from the device
+    returnBuffer = os.read(serialMaster, 1)
+    if returnBuffer == '':
+        return 0
+    else:
+        return int(returnBuffer)
+
 
 def main():
     pygame.init()
@@ -65,7 +89,7 @@ def main():
     running = 1
 
     while running:
-        clock.tick(1)  # fps
+        clock.tick(30)  # fps
         screen.fill((0, 0, 0))  # fill window black
         # counter stuff
         currentX = 0
@@ -76,6 +100,8 @@ def main():
 
         currentPixel = 0  # just to keep track where we are
 
+        # print str(readSerialBuffer())
+
         # print(x[i][j])
         # Draw the grid
         for currentPanelY in range(panelGrid.panelY):
@@ -85,7 +111,7 @@ def main():
                 for currentPixelY in range(panelGrid.Matrix[0][0].pixelY):
                     for currentPixelX in range(panelGrid.Matrix[0][0].pixelX):
                         # pixel inside panel
-                        color = WHITE
+                        # color = WHITE
                         # color = panelGrid.Matrix[currentPanelX, currentPanelY]
 
                         currentPanelOffsetX = currentPanelX * (panelGrid.Matrix[0][0].pixelX * (pixelWidth + pixelMargin) + panelMargin)
@@ -94,8 +120,13 @@ def main():
                         currentX = (pixelMargin + pixelWidth) * currentPixelX + pixelMargin + currentPanelOffsetX
                         currentY = (pixelMargin + pixelHeight) * currentPixelY + pixelMargin + currentPanelOffsetY
 
+                        RED = randint(0, 255)
+                        GREEN = randint(0, 255)
+                        BLUE = randint(0, 255)
+
                         # draw that dirty little pixel
-                        pygame.draw.rect(screen, color, [currentX, currentY, pixelWidth, pixelHeight], 1)
+                        pygame.draw.rect(screen, [RED, GREEN, BLUE], [currentX, currentY, pixelWidth, pixelHeight])
+                        pygame.draw.rect(screen, [255, 255, 255], [currentX, currentY, pixelWidth, pixelHeight], 1)
 
                         # print 'Pa: ' + str(currentPanelX) + ' ' + str(currentPanelY)
                         # print 'Pi: ' + str(currentPixelX) + ' ' + str(currentPixelY)
