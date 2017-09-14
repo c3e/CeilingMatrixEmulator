@@ -2,7 +2,6 @@ import pygame
 import os
 import pty
 import threading
-import time
 
 pixelWidth = 8
 pixelHeight = 8
