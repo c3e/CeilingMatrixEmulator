@@ -105,7 +105,7 @@ def mapPixelBuffer():
             red = pixelBuffer[bufferIndex]
             green = pixelBuffer[bufferIndex + 1]
             blue = pixelBuffer[bufferIndex + 2]
-            # print("Matrix[", currentPanelY, "][", currentPanelX, "].Matrix[", currentX, "][", currentY, "] = [", red, ", ", green, ", ", blue, "]", bufferIndex)
+
             panelGrid.Matrix[currentPanelY][currentPanelX].Matrix[currentX][currentY].color = [red, green, blue]
             currentX = currentX + 1
 
