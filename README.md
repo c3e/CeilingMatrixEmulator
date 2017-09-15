@@ -4,7 +4,7 @@ This python script tries to emulate the hardware of a ceiling pixel lamp
 by creating a virtual serial port for the input and renders the output into a pygame window.
 
 You can use it to test (for example) animations and games on your local machine, 
-without the neccessity to be connected to the actual ceiling pixel lamp.
+without the necessity to be connected to the actual ceiling pixel lamp.
 
 ## Requirements:
 - python (2.x / 3.x)
