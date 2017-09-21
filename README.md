@@ -42,11 +42,7 @@ sudo ln -s /dev/pts/7 /dev/ttyUSB99
 - Current settings for the (hopefully soon to be) finished ceiling pixel lamp @c3e lounge
 - Size x: 80 pixels
 - Size y: 40 pixels
-<<<<<<< HEAD
 - Space: 1 (only in use for the preview in Glediator)
-=======
-- Space: 1 (used for the interal preview in Glediator only)
->>>>>>> c98d29ff826a68477cf4ea7cce889c6c51d8654c
 
 #### Output Options
 
