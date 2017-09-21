@@ -1,23 +1,26 @@
 import pygame
 import os
 import pty
+import threading
 
 pixelWidth = 8
 pixelHeight = 8
 pixelMargin = 2
-panelMargin = 5
 
 panelPixelX = 8
 panelPixelY = 8
+panelMargin = 5
 
 gridPanelX = 10
 gridPanelY = 5
 
-windowWidth = ((pixelWidth + pixelMargin) * (panelPixelX + panelMargin)) * gridPanelX
-windowHeight = ((pixelHeight + pixelMargin) * (panelPixelY + panelMargin)) * gridPanelY
+windowWidth = (((pixelWidth + pixelMargin) * panelPixelX) + panelMargin) * gridPanelX
+windowHeight = (((pixelHeight + pixelMargin) * panelPixelY) + panelMargin) * gridPanelY
 
 # calculate complete number of pixels
 pixelBufferNumber = (panelPixelX * panelPixelY) * (gridPanelX * gridPanelY) * 3
+
+running = True
 
 
 class pixel:
@@ -68,10 +71,12 @@ pixelBuffer = [0] * pixelBufferNumber
 
 panelGrid = grid(gridPanelX, gridPanelY, "HL")
 
+newFrame = False
+
 
 def mapPixelBuffer():
     global pixelBuffer
-
+    global newFrame
     global panelPixelX
     global panelPixelY
 
@@ -100,7 +105,7 @@ def mapPixelBuffer():
             red = pixelBuffer[bufferIndex]
             green = pixelBuffer[bufferIndex + 1]
             blue = pixelBuffer[bufferIndex + 2]
-            # print("Matrix[", currentPanelY, "][", currentPanelX, "].Matrix[", currentX, "][", currentY, "] = [", red, ", ", green, ", ", blue, "]", bufferIndex)
+
             panelGrid.Matrix[currentPanelY][currentPanelX].Matrix[currentX][currentY].color = [red, green, blue]
             currentX = currentX + 1
 
@@ -110,23 +115,20 @@ def mapPixelBuffer():
 
         if currentY == panelPixelY:
             currentY = 0
+    newFrame = True
 
 
 def handleSerialStuff():
     global virtualSerial
     global pixelBufferNumber
     global pixelBuffer
+    global running
 
-    while virtualSerial.readSerialBuffer() != 1:
-        pass  # lets wait some until sync
-
-    for currentPixelInBuffer in range(pixelBufferNumber):
-        pixelBuffer[currentPixelInBuffer] = virtualSerial.readSerialBuffer()
-
-
-def updatePixelBuffer():
-    handleSerialStuff()
-    mapPixelBuffer()
+    while running:
+        if virtualSerial.readSerialBuffer() == 1:
+            for currentPixelInBuffer in range(pixelBufferNumber):
+                pixelBuffer[currentPixelInBuffer] = virtualSerial.readSerialBuffer()
+            mapPixelBuffer()
 
 
 def main():
@@ -142,8 +144,12 @@ def main():
 
     global gridPanelX
     global gridPanelY
+    global newFrame
+    global running
 
-    running = 1
+    threadSerial = threading.Thread(target=handleSerialStuff, args=[])
+    threadSerial.daemon = True
+    threadSerial.start()
 
     while running:
         clock.tick(30)  # fps
@@ -154,36 +160,39 @@ def main():
 
         currentPixel = 0  # just to keep track where we are
 
-        updatePixelBuffer()
         # print "Buffer update done."
 
         # print(x[i][j])
         # Draw the grid
-        for currentPanelY in range(panelGrid.panelY):
-            for currentPanelX in range(panelGrid.panelX):
-                # panel inside grid
-                for currentPixelY in range(panelGrid.Matrix[0][0].pixelY):
-                    for currentPixelX in range(panelGrid.Matrix[0][0].pixelX):
-                        # pixel inside panel
-                        currentPanelOffsetX = currentPanelX * (panelGrid.Matrix[0][0].pixelX * (pixelWidth + pixelMargin) + panelMargin)
-                        currentPanelOffsetY = currentPanelY * (panelGrid.Matrix[0][0].pixelY * (pixelWidth + pixelMargin) + panelMargin)
+        if newFrame:
+            for currentPanelY in range(panelGrid.panelY):
+                for currentPanelX in range(panelGrid.panelX):
+                    # panel inside grid
+                    for currentPixelY in range(panelGrid.Matrix[0][0].pixelY):
+                        for currentPixelX in range(panelGrid.Matrix[0][0].pixelX):
+                            # pixel inside panel
+                            currentPanelOffsetX = currentPanelX * (panelGrid.Matrix[0][0].pixelX * (pixelWidth + pixelMargin) + panelMargin)
+                            currentPanelOffsetY = currentPanelY * (panelGrid.Matrix[0][0].pixelY * (pixelWidth + pixelMargin) + panelMargin)
 
-                        currentX = (pixelMargin + pixelWidth) * currentPixelX + pixelMargin + currentPanelOffsetX
-                        currentY = (pixelMargin + pixelHeight) * currentPixelY + pixelMargin + currentPanelOffsetY
+                            currentX = (pixelMargin + pixelWidth) * currentPixelX + pixelMargin + currentPanelOffsetX
+                            currentY = (pixelMargin + pixelHeight) * currentPixelY + pixelMargin + currentPanelOffsetY
 
-                        # draw that dirty little pixel
-                        pygame.draw.rect(screen, panelGrid.Matrix[currentPanelY][currentPanelX].Matrix[currentPixelX][currentPixelY].color, [currentX, currentY, pixelWidth, pixelHeight])
-                        # pygame.draw.rect(screen, [255, 255, 255], [currentX, currentY, pixelWidth, pixelHeight], 1)
-                        currentPixel = currentPixel + 1
+                            # draw that dirty little pixel
+                            pygame.draw.rect(screen, panelGrid.Matrix[currentPanelY][currentPanelX].Matrix[currentPixelX][currentPixelY].color, [currentX, currentY, pixelWidth, pixelHeight])
+                            # pygame.draw.rect(screen, [255, 255, 255], [currentX, currentY, pixelWidth, pixelHeight], 1)
+                            currentPixel = currentPixel + 1
+            pygame.display.flip()
+            newFrame = False
 
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                 running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.event.post(pygame.event.Event(pygame.QUIT))
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
 
-        pygame.display.flip()
+    pygame.quit()
 
 
 main()
