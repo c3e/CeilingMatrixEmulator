@@ -6,6 +6,7 @@ import threading
 pixelWidth = 8
 pixelHeight = 8
 pixelMargin = 2
+panelMargin = 5
 
 panelPixelX = 8
 panelPixelY = 8
@@ -19,7 +20,6 @@ windowHeight = (((pixelHeight + pixelMargin) * panelPixelY) + panelMargin) * gri
 
 # calculate complete number of pixels
 pixelBufferNumber = (panelPixelX * panelPixelY) * (gridPanelX * gridPanelY) * 3
-
 running = True
 
 
@@ -62,7 +62,6 @@ class SerialEmulator:
         if returnBuffer == '':
             return 0
         else:
-            # print ord(returnBuffer)
             return ord(returnBuffer)
 
 
@@ -70,7 +69,6 @@ virtualSerial = SerialEmulator()
 pixelBuffer = [0] * pixelBufferNumber
 
 panelGrid = grid(gridPanelX, gridPanelY, "HL")
-
 newFrame = False
 
 
@@ -82,9 +80,7 @@ def mapPixelBuffer():
 
     currentX = 0
     currentY = 0
-
     valuesPerPanel = panelPixelX * panelPixelY * 3
-
     currentPanelX = 0
     currentPanelY = 0
 
@@ -105,7 +101,6 @@ def mapPixelBuffer():
             red = pixelBuffer[bufferIndex]
             green = pixelBuffer[bufferIndex + 1]
             blue = pixelBuffer[bufferIndex + 2]
-
             panelGrid.Matrix[currentPanelY][currentPanelX].Matrix[currentX][currentY].color = [red, green, blue]
             currentX = currentX + 1
 
@@ -115,6 +110,7 @@ def mapPixelBuffer():
 
         if currentY == panelPixelY:
             currentY = 0
+
     newFrame = True
 
 
@@ -129,6 +125,11 @@ def handleSerialStuff():
             for currentPixelInBuffer in range(pixelBufferNumber):
                 pixelBuffer[currentPixelInBuffer] = virtualSerial.readSerialBuffer()
             mapPixelBuffer()
+
+
+def updatePixelBuffer():
+    handleSerialStuff()
+    mapPixelBuffer()
 
 
 def main():
@@ -160,9 +161,7 @@ def main():
 
         currentPixel = 0  # just to keep track where we are
 
-        # print "Buffer update done."
-
-        # print(x[i][j])
+        updatePixelBuffer()
         # Draw the grid
         if newFrame:
             for currentPanelY in range(panelGrid.panelY):
@@ -179,7 +178,6 @@ def main():
 
                             # draw that dirty little pixel
                             pygame.draw.rect(screen, panelGrid.Matrix[currentPanelY][currentPanelX].Matrix[currentPixelX][currentPixelY].color, [currentX, currentY, pixelWidth, pixelHeight])
-                            # pygame.draw.rect(screen, [255, 255, 255], [currentX, currentY, pixelWidth, pixelHeight], 1)
                             currentPixel = currentPixel + 1
             pygame.display.flip()
             newFrame = False

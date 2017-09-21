@@ -1,11 +1,19 @@
 # CeilingMatrixEmulator
 
+<<<<<<< HEAD
 This python script, tries to emulate the hardware of the ceiling pixel lamp, 
 by creating a virtual serial port for the input and renders the output into a pygame window.
 
 You can use it to test for example animations and games on your local machine, without the use of the actual hardware.
 
 This experimetal branch adds a non blocking serial read, with the help of a thread.
+=======
+This python script tries to emulate the hardware of a ceiling pixel lamp 
+by creating a virtual serial port for the input and renders the output into a pygame window.
+
+You can use it to test (for example) animations and games on your local machine, 
+without the necessity to be connected to the actual ceiling pixel lamp.
+>>>>>>> c98d29ff826a68477cf4ea7cce889c6c51d8654c
 
 ## Requirements:
 - python (2.x / 3.x)
@@ -42,7 +50,11 @@ sudo ln -s /dev/pts/7 /dev/ttyUSB99
 - Current settings for the (hopefully soon to be) finished ceiling pixel lamp @c3e lounge
 - Size x: 80 pixels
 - Size y: 40 pixels
+<<<<<<< HEAD
 - Space: 1 (only in use for the preview in Glediator)
+=======
+- Space: 1 (used for the interal preview in Glediator only)
+>>>>>>> c98d29ff826a68477cf4ea7cce889c6c51d8654c
 
 #### Output Options
 
@@ -51,7 +63,11 @@ sudo ln -s /dev/pts/7 /dev/ttyUSB99
 - Output mode needs to be "Glediator_Protocol"
 - As of now, the emulator only supports the pixel & board order "HL_TL"
 - Color order: RGB
+<<<<<<< HEAD
 - Board size x & y: 8 (so you get the 10 by 5 panel grid)
+=======
+- Board size x & y: 8 (so you get a 10 by 5 panel grid)
+>>>>>>> c98d29ff826a68477cf4ea7cce889c6c51d8654c
 - You can ignore the "Baud-Rate" value
 
 ### TODO's:
