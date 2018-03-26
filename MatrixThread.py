@@ -7,7 +7,6 @@
 
 import colors
 import pygame
-import time
 
 from threading import Thread
 
@@ -48,7 +47,6 @@ class MatrixThread(Thread):
 
         # get the screen from pygame
         self.__screen = pygame.display.set_mode((windowWidth, windowHeight))
-        self.__clock = pygame.time.Clock()
 
         # set constructor parameters to class parameters
         self.__window_width = windowWidth

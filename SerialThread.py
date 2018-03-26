@@ -7,8 +7,6 @@
 
 import os
 import pty
-import subprocess
-import time
 
 from threading import Thread, Event
 

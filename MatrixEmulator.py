@@ -6,7 +6,6 @@
 
 
 import os
-import pygame
 import signal
 import time
 import sys
