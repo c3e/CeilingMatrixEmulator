@@ -15,9 +15,9 @@ from MatrixThread import MatrixThread
 from SerialThread import SerialThread
 
 
-#----------------#
-# Configguration #
-#----------------#
+#---------------#
+# Configuration #
+#---------------#
 PIXEL_WIDTH = 8
 PIXEL_MARGIN = 2
 
