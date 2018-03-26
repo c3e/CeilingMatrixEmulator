@@ -2,7 +2,7 @@
 #
 # emulator for led ceiling
 #
-# (c) 2018 Daniel Jankowski
+# (c) 2018 Chaospott Essen
 
 
 import os
