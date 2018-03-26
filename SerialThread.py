@@ -64,7 +64,7 @@ class SerialThread(Thread):
         # create /dev/ttyUSB99 from /dev/pts/X
         try:
             os.symlink(self.__slave_name, '/dev/ttyUSB99')
-        except os.FileExistsError:
+        except Exception as e:
             # of the symlink exists, remove and recreate it
             os.remove('/dev/ttyUSB99')
             os.symlink(self.__slave_name, '/dev/ttyUSB99')
