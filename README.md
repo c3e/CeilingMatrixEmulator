@@ -7,8 +7,9 @@ You can use it to test for example animations and games on your local machine, w
 
 This experimetal branch adds a non blocking serial read, with the help of a thread.
 
+
 ## Requirements:
-- python (2.x / 3.x)
+- python (2.x / 3.x) *(both working)*
   - https://www.python.org/downloads/
 - python pygame library
   - https://www.pygame.org/wiki/GettingStarted
@@ -26,11 +27,10 @@ This experimetal branch adds a non blocking serial read, with the help of a thre
 git clone https://github.com/c3e/CeilingMatrixEmulator.git
 cd CeilingMatrixEmulator
 python MatrixEmulator.py
-# Create a symlink, based on the printed message 
-# exp: ('Hey use this serial port:', '/dev/pts/7')
-# so other application (like glediator) can see and use it.
-sudo ln -s /dev/pts/7 /dev/ttyUSB99
 ```
+
+**Warning!** This script removes any existing /dev/ttyUSB99 and
+reinitializes it with the pseudo terminal of the emulator.
 
 
 ## Setup Glediator for Testing:
