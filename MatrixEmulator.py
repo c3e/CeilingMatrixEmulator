@@ -1,196 +1,95 @@
-import pygame
+#!/usr/bin/env python3
+#
+# emulator for led ceiling
+#
+# (c) 2018 Chaospott Essen
+
+
 import os
-import pty
-import threading
+import signal
+import time
+import sys
 
-pixelWidth = 8
-pixelHeight = 8
-pixelMargin = 2
-panelMargin = 5
-
-panelPixelX = 8
-panelPixelY = 8
-panelMargin = 5
-
-gridPanelX = 10
-gridPanelY = 5
-
-windowWidth = (((pixelWidth + pixelMargin) * panelPixelX) + panelMargin) * gridPanelX
-windowHeight = (((pixelHeight + pixelMargin) * panelPixelY) + panelMargin) * gridPanelY
-
-# calculate complete number of pixels
-pixelBufferNumber = (panelPixelX * panelPixelY) * (gridPanelX * gridPanelY) * 3
-running = True
+from MatrixThread import MatrixThread
+from SerialThread import SerialThread
 
 
-class pixel:
-    def __init__(self):
-        self.color = [128, 128, 128]
+#---------------#
+# Configuration #
+#---------------#
+PIXEL_WIDTH = 8
+PIXEL_MARGIN = 2
+
+CHUNK_WIDTH = 8
+CHUNK_HEIGHT = 8
+CHUNK_MARGIN = 2
+
+GRID_WIDTH = 10
+GRID_HEIGHT = 5
 
 
-class panel:
-    def __init__(self, pixelX, pixelY, pixelOrder):
-        self.pixelX = pixelX
-        self.pixelY = pixelY
-        self.pixelOrder = pixelOrder
-        self.Matrix = [[pixel() for x in range(self.pixelX)] for y in range(self.pixelY)]
+def sighandler(signum, frame):
+    """
+    Callback for the signal handler.
 
+    It removes the symlink for the
+    pts to /dev/ttyUSB99.
+    """
+    # remove the symlink
+    os.remove('/dev/ttyUSB99')
 
-class grid:
-    def __init__(self, panelX, panelY, panelOrder):
-        self.panelX = panelX
-        self.panelY = panelY
-        self.panelOrder = panelOrder
+    # print the status
+    print('==> Removed symlink')
 
-        global panelPixelX
-        self.panelPixelX = panelPixelX
-        global panelPixelY
-        self.panelPixelY = panelPixelY
-
-        self.Matrix = [[panel(self.panelPixelX, self.panelPixelY, self.panelOrder) for x in range(self.panelX)] for y in range(self.panelY)]
-
-
-class SerialEmulator:
-    def __init__(self):
-        self.master, self.slave = pty.openpty()
-        self.s_name = os.ttyname(self.slave)
-        print("Hey use this serial port:", self.s_name)
-
-    def readSerialBuffer(self):
-        returnBuffer = os.read(self.master, 1)
-
-        if returnBuffer == '':
-            return 0
-        else:
-            return ord(returnBuffer)
-
-
-virtualSerial = SerialEmulator()
-pixelBuffer = [0] * pixelBufferNumber
-
-panelGrid = grid(gridPanelX, gridPanelY, "HL")
-newFrame = False
-
-
-def mapPixelBuffer():
-    global pixelBuffer
-    global newFrame
-    global panelPixelX
-    global panelPixelY
-
-    currentX = 0
-    currentY = 0
-    valuesPerPanel = panelPixelX * panelPixelY * 3
-    currentPanelX = 0
-    currentPanelY = 0
-
-    for bufferIndex in range(len(pixelBuffer)):
-        if bufferIndex % valuesPerPanel == 0:
-            if bufferIndex == 0:
-                pass
-            else:
-                currentPanelX = currentPanelX + 1
-                currentX = 0
-                currentY = 0
-
-        if currentPanelX == panelGrid.panelX:
-            currentPanelX = 0
-            currentPanelY = currentPanelY + 1
-
-        if bufferIndex % 3 == 0:
-            red = pixelBuffer[bufferIndex]
-            green = pixelBuffer[bufferIndex + 1]
-            blue = pixelBuffer[bufferIndex + 2]
-            panelGrid.Matrix[currentPanelY][currentPanelX].Matrix[currentX][currentY].color = [red, green, blue]
-            currentX = currentX + 1
-
-        if currentX == panelPixelX:
-            currentY = currentY + 1
-            currentX = 0
-
-        if currentY == panelPixelY:
-            currentY = 0
-
-    newFrame = True
-
-
-def handleSerialStuff():
-    global virtualSerial
-    global pixelBufferNumber
-    global pixelBuffer
-    global running
-
-    while running:
-        if virtualSerial.readSerialBuffer() == 1:
-            for currentPixelInBuffer in range(pixelBufferNumber):
-                pixelBuffer[currentPixelInBuffer] = virtualSerial.readSerialBuffer()
-            mapPixelBuffer()
-
-
-def updatePixelBuffer():
-    handleSerialStuff()
-    mapPixelBuffer()
+    # exit gracefully
+    sys.exit(0)
 
 
 def main():
-    pygame.init()
-    screen = pygame.display.set_mode((windowWidth, windowHeight))
+    """
+    Main function and entrypoint of the script.
+    """
+    # calculate window width and window height from the configuration
+    windowWidth = (((PIXEL_WIDTH + PIXEL_MARGIN) * CHUNK_WIDTH) + CHUNK_MARGIN) \
+            * GRID_WIDTH
+    windowHeight = (((PIXEL_WIDTH + PIXEL_MARGIN) * CHUNK_HEIGHT) + CHUNK_MARGIN) \
+            * GRID_HEIGHT
 
-    pygame.display.set_caption("Pixellamp - Matrix Emulator")
+    # register the callback to be called on SIGINT
+    signal.signal(signal.SIGINT, sighandler)
 
-    pygame.mouse.set_visible(1)
-    pygame.key.set_repeat(1, 30)
+    # initialize the ui thread with configured parameters
+    matrix_thread = MatrixThread(
+            windowWidth,
+            windowHeight,
+            PIXEL_WIDTH,
+            PIXEL_MARGIN,
+            CHUNK_WIDTH,
+            CHUNK_HEIGHT,
+            CHUNK_MARGIN,
+            GRID_WIDTH,
+            GRID_HEIGHT
+    )
 
-    clock = pygame.time.Clock()
+    # initialize the serial communicator
+    serial_thread = SerialThread(
+            matrix_thread,
+            CHUNK_WIDTH,
+            CHUNK_HEIGHT,
+            GRID_WIDTH,
+            GRID_HEIGHT
+    )
 
-    global gridPanelX
-    global gridPanelY
-    global newFrame
-    global running
+    # run the serial thread to fetch data to draw
+    serial_thread.run()
 
-    threadSerial = threading.Thread(target=handleSerialStuff, args=[])
-    threadSerial.daemon = True
-    threadSerial.start()
-
-    while running:
-        clock.tick(30)  # fps
-        screen.fill((0, 0, 0))  # fill window black
-        # counter stuff
-        currentX = 0
-        currentY = 0
-
-        currentPixel = 0  # just to keep track where we are
-
-        updatePixelBuffer()
-        # Draw the grid
-        if newFrame:
-            for currentPanelY in range(panelGrid.panelY):
-                for currentPanelX in range(panelGrid.panelX):
-                    # panel inside grid
-                    for currentPixelY in range(panelGrid.Matrix[0][0].pixelY):
-                        for currentPixelX in range(panelGrid.Matrix[0][0].pixelX):
-                            # pixel inside panel
-                            currentPanelOffsetX = currentPanelX * (panelGrid.Matrix[0][0].pixelX * (pixelWidth + pixelMargin) + panelMargin)
-                            currentPanelOffsetY = currentPanelY * (panelGrid.Matrix[0][0].pixelY * (pixelWidth + pixelMargin) + panelMargin)
-
-                            currentX = (pixelMargin + pixelWidth) * currentPixelX + pixelMargin + currentPanelOffsetX
-                            currentY = (pixelMargin + pixelHeight) * currentPixelY + pixelMargin + currentPanelOffsetY
-
-                            # draw that dirty little pixel
-                            pygame.draw.rect(screen, panelGrid.Matrix[currentPanelY][currentPanelX].Matrix[currentPixelX][currentPixelY].color, [currentX, currentY, pixelWidth, pixelHeight])
-                            currentPixel = currentPixel + 1
-            pygame.display.flip()
-            newFrame = False
-
-        events = pygame.event.get()
-        for event in events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-
-    pygame.quit()
+    # run while true with timeout of 60 seconds in order
+    # to save cpu time, but not exit the script
+    while True:
+        time.sleep(60)
 
 
-main()
+# call the main function if this script isn't
+# loaded as module
+if __name__ == '__main__':
+    main()
